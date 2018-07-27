@@ -106,8 +106,8 @@ class ZL_motor_control(MotorControlBus):
             print("send failed!")
             return False
 
-    #"""电机使能"""
-    #要求能够向多个电机同时发送
+    # 电机使能
+    # 要求能够向多个电机同时发送
     def enable(self,id_list):
         addr = [0x00,0x10]
         data = 0x1F
@@ -130,8 +130,8 @@ class ZL_motor_control(MotorControlBus):
                 return [False, callback_result]
         return True
 
-    #"""电机失能"""
-    #要求能够向多个电机同时发送
+    # 电机失能
+    # 要求能够向多个电机同时发送
     def disable(self,id_list):
         addr = [0x00,0x10]
         data = 0x0F
@@ -154,7 +154,7 @@ class ZL_motor_control(MotorControlBus):
                 return [False,callback_result]
         return True
 
-    #”“”设置电机模式
+    # 设置电机模式
     def set_mode(self,id_list,mode_list):
         addr = [0x00, 0x19]
         possible_callback = {}
@@ -178,7 +178,7 @@ class ZL_motor_control(MotorControlBus):
                 return [False,callback_result]
         return True
 
-    #"""设置位置模式--绝对模式
+    # 设置位置模式--绝对模式
     def set_posmode_absolutemode(self,id_list):
         addr = [0x00, 0x17]
         possible_callback = {}
@@ -201,7 +201,7 @@ class ZL_motor_control(MotorControlBus):
                 return [False,callback_result]
         return True
 
-    #"""设置位置模式--相对模式
+    # 设置位置模式--相对模式
     def set_posmode_relativemode(self,id_list):
         addr = [0x00, 0x17]
         possible_callback = {}
@@ -224,7 +224,7 @@ class ZL_motor_control(MotorControlBus):
                 return [False,callback_result]
         return True
 
-    #"""设置位置模式下--电机位置
+    # 设置位置模式下--电机位置
     def set_pos(self,id_list,pos_list):
         addr = [0x00, 0x16]
         possible_callback = {}
@@ -248,7 +248,7 @@ class ZL_motor_control(MotorControlBus):
                 return [False,callback_result]
         return True
 
-    # """设置位置模式--加减速时间                       #单位是100毫秒
+    # 设置位置模式--加减速时间                       #单位是100毫秒
     def set_pos_acctime(self,id_list,acctime_list):
         addr = [0x00, 0x12]
         possible_callback = {}
@@ -275,7 +275,7 @@ class ZL_motor_control(MotorControlBus):
                 return [False, callback_result]
         return True
 
-    # """设置位置模式--梯形速度                         #单位是rad/s
+    # 设置位置模式--梯形速度                         #单位是rad/s
     def set_pos_trapvel(self,id_list,trapvel_list):
         addr = [0x00, 0x14]
         possible_callback = {}
@@ -299,7 +299,7 @@ class ZL_motor_control(MotorControlBus):
                 return [False, callback_result]
         return True
 
-    #”“”设置电机速度                                  #速度的单位是 rad/s
+    # 设置电机速度                                  #速度的单位是 rad/s
     def set_vel(self,id_list,vel_list):
         addr = [0x00, 0x11]
         possible_callback = {}
@@ -323,10 +323,8 @@ class ZL_motor_control(MotorControlBus):
                 return [False,callback_result]
         return True
 
-    # “”“设置加速度模式下--加减速时间                   #单位是100毫秒
-
-    #”“”设置电机加速时间，到最大速度                     #单位是100毫秒
-    def set_vel_acctime(self,id_list,acctime_list):
+    # 设置加速度模式下--加减速时间                   #单位是100毫秒
+    def set_vel_acctime(self, id_list, acctime_list):
         addr = [0x00, 0x13]
         possible_callback = {}
         callback_result = {}
@@ -352,6 +350,27 @@ class ZL_motor_control(MotorControlBus):
                 return [False, callback_result]
         return True
 
+    def set_vel_stop(self,id_list):
+        addr = [0x00, 0x10]
+        possible_callback = {}
+        callback_result = {}
+        id = id_list
+        for member in id :
+            data = 0x0F
+            msg = self.ship_frame(member,addr,data)
+            try:
+                self.bus.send(msg,timeout=0.3)
+            except:
+                print("send failed!")
+                return False
+            finally:
+                possible_callback[member]=self.cal_callbackframe(msg)
+                callback_result[member] = -1
+        self.check_callback(possible_callback,callback_result)
+        for member in id:
+            if callback_result[member] ==False:
+                return [False,callback_result]
+        return True
     # 检查反馈报文
     # 设置检测时间变量
     # 将报文反馈结果存储
@@ -387,7 +406,7 @@ class ZL_motor_control(MotorControlBus):
                 return callback_result
 
     # 计算可能的反馈报文，并装到一个字典中
-    #["True","False"]
+    # ["True","False"]
     def cal_callbackframe(self,frame_sended):
         possiblecallback = {}
         if(frame_sended.data[1]==0xFA):
@@ -414,6 +433,7 @@ class ZL_motor_control(MotorControlBus):
         else:
             return -1
 
+    #读取消息并跟新电机状态
     def read_status(self,recv_msg):
         if (recv_msg == self.statuscallback["Err_02"]):
             print(recv_msg.arbitration_id,"号 驱动器过流！")
