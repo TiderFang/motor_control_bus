@@ -64,24 +64,26 @@ class MotorControlBus(object):
         return True
 #"""装填帧"""
     @abc.abstractmethod
-    def ship_frame(data):
+    def ship_frame(self,data):
         return True
 
 #"""发送帧"""
     @abc.abstractmethod
-    def send_frame(frame):
+    def send_frame(self,frame):
         return True
 
 #"""计算反馈帧"""
     @abc.abstractmethod
-    def cal_callbackframe(frame_sended):
+    def cal_callbackframe(self,frame_sended):
         return True
 
 #"""确认反馈帧"""
     @abc.abstractmethod
-    def confirm_callback(frame_sended):
+    def confirm_callback(self,possible_callback,frame_sended):
         return True
 
 #"""读取电机状态"""
-
+    @abc.abstractmethod
+    def read_status(self,msg):
+        return True
 
