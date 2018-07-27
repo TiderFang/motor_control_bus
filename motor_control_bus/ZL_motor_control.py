@@ -202,7 +202,7 @@ class ZL_motor_control(MotorControlBus):
         return True
 
     #"""设置位置模式--相对模式
-    def set_posmode_torelativemode(self,id_list):
+    def set_posmode_relativemode(self,id_list):
         addr = [0x00, 0x17]
         possible_callback = {}
         callback_result = {}
@@ -258,7 +258,7 @@ class ZL_motor_control(MotorControlBus):
         for member in id:
             data = acctime[id.index(member)]
             msg = self.ship_frame(member, addr, data)
-            msg.data[6] = 0x0A
+            msg.data[6] = 0x0A     # [0x00,0x00,0x0A,个数]   100毫秒的个数
             msg.data[4] = 0x00
             msg.data[5] = 0x00
             try:
@@ -299,8 +299,8 @@ class ZL_motor_control(MotorControlBus):
                 return [False, callback_result]
         return True
 
-    #”“”设置电机速度
-    def set_vel(self,id_list,vel_list):   #速度的单位是 rad/s
+    #”“”设置电机速度                                  #速度的单位是 rad/s
+    def set_vel(self,id_list,vel_list):
         addr = [0x00, 0x11]
         possible_callback = {}
         callback_result = {}
@@ -324,7 +324,9 @@ class ZL_motor_control(MotorControlBus):
         return True
 
     # “”“设置加速度模式下--加减速时间                   #单位是100毫秒
-    def set_vel_acctime(self,id_list,acctime_list):   #单位是毫秒
+
+    #”“”设置电机加速时间，到最大速度                     #单位是100毫秒
+    def set_vel_acctime(self,id_list,acctime_list):
         addr = [0x00, 0x13]
         possible_callback = {}
         callback_result = {}
