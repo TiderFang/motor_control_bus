@@ -37,11 +37,13 @@ class ZL_motor_control(MotorControlBus):
         self.timout = 0.3
         self.id = id_list
         #打开bus
+        self.open_bus()
         self.status = {}
         self.statuscallback = {}
+        #设置轮子状态
         for member in self.id:
             self.status[member] = {"Pos":0, "Vel":0, "I":0, "Err":0}
-        self.open_bus()
+        # 状态反馈报文
         self.statuscallback["Stat_Pos"] =   can.Message(data=[0x00,0xFE,0x00,0x20,0x00,0x00,0x00,0x00])
         self.statuscallback["Stat_Vel_I"] = can.Message(data=[0x00,0xFE,0x00,0x21,0x00,0x00,0x00,0x00])
         # 报警报文
@@ -56,6 +58,7 @@ class ZL_motor_control(MotorControlBus):
     # 打开bus
     def open_bus(self):
         try:
+            # 打开方式待定
             self.bus = can.interface.Bus(bustype=self.bustype, channel=self.channel, biterate=self.bitrate)
             #self.bus = can.interfaces.serial.serial_can.SerialBus(channel = self.channel, baudrate = self.baudrate)
         #捕捉异常
@@ -122,7 +125,9 @@ class ZL_motor_control(MotorControlBus):
                 print("send failed!")
                 return False
             finally:
+                #计算可能的返回报文
                 possible_callback[member]=self.cal_callbackframe(msg)
+                #保存报文信息的列表
                 callback_result[member] = -1
         self.check_callback(possible_callback,callback_result)
         for member in id:
@@ -197,7 +202,7 @@ class ZL_motor_control(MotorControlBus):
                 callback_result[member] = -1
         self.check_callback(possible_callback,callback_result)
         for member in id:
-            if callback_result[member] ==False:
+            if callback_result[member] == False:
                 return [False,callback_result]
         return True
 
