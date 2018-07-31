@@ -79,13 +79,18 @@ class ZL_motor_control(MotorControlBus):
             #关闭异常，返回false
             return False
 
-    # 装填帧
-    # 输入数据帧，返回Message数据
+
     """
         id:表示从站id,单个id
         addr:表示寄存器地址，由地址高地位表示addr1,addr2]
         value:表示目标数据，32位数据。
+        vale采用大端在前，小段在后表示
+        data格式：[0x00 0xfa 0xaddr[0] 0xaddr[1] 0xvalue[0] 0xvalue[1] 0xvalue[2] 0xvalue[3]]
+        0x--表示一个字节
+        
     """
+    # 装填帧
+    # 输入数据帧，返回Message数据
     def ship_frame(self, id, addr, value):
         valuebytes = struct.pack(">i",value)
         data = bytearray([0x00,0xFA,addr[0],addr[1]])
@@ -109,273 +114,120 @@ class ZL_motor_control(MotorControlBus):
             print("send failed!")
             return False
 
-    # 电机使能
-    # 要求能够向多个电机同时发送
-    def enable(self,id_list):
-        addr = [0x00,0x10]
-        data = 0x1F
-        possible_callback = {}
-        callback_result = {}
-        id = id_list
-        for member in id :
+    # 同一的发送以及确认过程
+    # @@ id_list是从站号  @@ addr:寄存器地址  @@ data_dict:数据字典[从站号：数据] @@ possible_callback:可能的反馈报文  @@callback_resualt:返回值
+    def send_and_confirm(self,id_list,addr,data_dict):
+        possible_callback={}
+        callback_result={}
+        for member in id_list :
+            data = data_dict[member]
             msg = self.ship_frame(member,addr,data)
             try:
-                self.bus.send(msg,timeout=0.3)
+                self.bus.send(msg,timeout=self.timout)
             except:
                 print("send failed!")
                 return False
             finally:
-                #计算可能的返回报文
-                possible_callback[member]=self.cal_callbackframe(msg)
-                #保存报文信息的列表
+                # 计算可能的返回报文
+                possible_callback[member] = self.cal_callbackframe(msg)
+                # 保存报文信息的列表
                 callback_result[member] = -1
-        self.check_callback(possible_callback,callback_result)
-        for member in id:
+        for member in id_list:
             if callback_result[member] == False or callback_result[member] == -1:
                 return [False, callback_result]
         return True
+
+    # 电机使能
+    # 要求能够向多个电机同时发送
+    def enable(self,id_list):
+        addr = [0x00,0x10]
+        data_dict = {}
+        for member in id_list:
+            data_dict[member] = 0x1F
+        return self.send_and_confirm(id_list,addr,data_dict)
 
     # 电机失能
     # 要求能够向多个电机同时发送
     def disable(self,id_list):
         addr = [0x00,0x10]
-        data = 0x0F
-        possible_callback = {}
-        callback_result = {}
-        id = id_list
-        for member in id :
-            msg = self.ship_frame(member,addr,data)
-            try:
-                self.bus.send(msg,timeout=0.3)
-            except:
-                print("send failed!")
-                return False
-            finally:
-                possible_callback[member]=self.cal_callbackframe(msg)
-                callback_result[member] = -1
-        self.check_callback(possible_callback,callback_result)
-        for member in id:
-            if callback_result[member] ==False:
-                return [False,callback_result]
-        return True
+        data_dict = {}
+        for member in id_list:
+            data_dict[member] = 0x0F
+        return self.send_and_confirm(id_list,addr,data_dict)
 
     # 设置电机模式
-    def set_mode(self,id_list,mode_list):
+    def set_mode(self,id_list,data_dict):
         addr = [0x00, 0x19]
-        possible_callback = {}
-        callback_result = {}
-        id = id_list
-        mode = mode_list
-        for member in id :
-            data = mode[id.index(member)]
-            msg = self.ship_frame(member,addr,data)
-            try:
-                self.bus.send(msg,timeout=0.3)
-            except:
-                print("send failed!")
-                return False
-            finally:
-                possible_callback[member]=self.cal_callbackframe(msg)
-                callback_result[member] = -1
-        self.check_callback(possible_callback,callback_result)
-        for member in id:
-            if callback_result[member] ==False:
-                return [False,callback_result]
-        return True
+        return self.send_and_confirm(id_list, addr, data_dict)
 
     # 设置位置模式--绝对模式
     def set_posmode_absolutemode(self,id_list):
         addr = [0x00, 0x17]
-        possible_callback = {}
-        callback_result = {}
-        id = id_list
-        data = 0x4F
-        for member in id :
-            msg = self.ship_frame(member,addr,data)
-            try:
-                self.bus.send(msg,timeout=0.3)
-            except:
-                print("send failed!")
-                return False
-            finally:
-                possible_callback[member]=self.cal_callbackframe(msg)
-                callback_result[member] = -1
-        self.check_callback(possible_callback,callback_result)
-        for member in id:
-            if callback_result[member] == False:
-                return [False,callback_result]
-        return True
+        data_dict = {}
+        for member in id_list:
+            data_dict[member] = 0x4F
+        return self.send_and_confirm(id_list,addr,data_dict)
 
     # 设置位置模式--相对模式
     def set_posmode_relativemode(self,id_list):
         addr = [0x00, 0x17]
-        possible_callback = {}
-        callback_result = {}
-        id = id_list
-        data = 0x5F
-        for member in id :
-            msg = self.ship_frame(member,addr,data)
-            try:
-                self.bus.send(msg,timeout=0.3)
-            except:
-                print("send failed!")
-                return False
-            finally:
-                possible_callback[member]=self.cal_callbackframe(msg)
-                callback_result[member] = -1
-        self.check_callback(possible_callback,callback_result)
-        for member in id:
-            if callback_result[member] ==False:
-                return [False,callback_result]
-        return True
+        data_dict = {}
+        for member in id_list:
+            data_dict[member] = 0x5F
+        return self.send_and_confirm(id_list,addr,data_dict)
 
     # 设置位置模式下--电机位置
-    def set_pos(self,id_list,pos_list):
+    def set_pos(self,id_list,pos_dict):
         addr = [0x00, 0x16]
-        possible_callback = {}
-        callback_result = {}
-        id = id_list
-        pos = pos_list
-        for member in id :
-            data = pos[id.index(member)]
-            msg = self.ship_frame(member,addr,data)
-            try:
-                self.bus.send(msg,timeout=0.3)
-            except:
-                print("send failed!")
-                return False
-            finally:
-                possible_callback[member]=self.cal_callbackframe(msg)
-                callback_result[member] = -1
-        self.check_callback(possible_callback,callback_result)
-        for member in id:
-            if callback_result[member] ==False:
-                return [False,callback_result]
-        return True
+        data_dict = pos_dict
+        return self.send_and_confirm(id_list, addr, data_dict)
 
     # 设置位置模式--加减速时间                       #单位是100毫秒
-    def set_pos_acctime(self,id_list,acctime_list):
+    def set_pos_acctime(self,id_list,acctime_dict):
         addr = [0x00, 0x12]
-        possible_callback = {}
-        callback_result = {}
-        id = id_list
-        acctime = acctime_list
-        for member in id:
-            data = acctime[id.index(member)]
-            msg = self.ship_frame(member, addr, data)
-            msg.data[6] = 0x0A     # [0x00,0x00,0x0A,个数]   100毫秒的个数
-            msg.data[4] = 0x00
-            msg.data[5] = 0x00
-            try:
-                self.bus.send(msg, timeout=0.3)
-            except:
-                print("send failed!")
-                return False
-            finally:
-                possible_callback[member] = self.cal_callbackframe(msg)
-                callback_result[member] = -1
-        self.check_callback(possible_callback, callback_result)
-        for member in id:
-            if callback_result[member] == False:
-                return [False, callback_result]
-        return True
+        data_dict = acctime_dict
+        return self.send_and_confirm(id_list, addr, data_dict)
 
     # 设置位置模式--梯形速度                         #单位是rad/s
     def set_pos_trapvel(self,id_list,trapvel_list):
         addr = [0x00, 0x14]
-        possible_callback = {}
-        callback_result = {}
-        id = id_list
-        trapvel = trapvel_list
-        for member in id:
-            data = int(trapvel[id.index(member)]*22.64331)  #换算单位,最大限速1000RPM,即104.666
-            msg = self.ship_frame(member, addr, data)
-            try:
-                self.bus.send(msg, timeout=0.3)
-            except:
-                print("send failed!")
-                return False
-            finally:
-                possible_callback[member] = self.cal_callbackframe(msg)
-                callback_result[member] = -1
-        self.check_callback(possible_callback, callback_result)
-        for member in id:
-            if callback_result[member] == False:
-                return [False, callback_result]
-        return True
+        data_dict = {}
+        for member in id_list:
+            data_dict[member] = int(trapvel_list[id_list.index(member)]*22.64331)  #换算单位,最大限速1000RPM,即104.666
+        return self.send_and_confirm(id_list, addr, data_dict)
+
 
     # 设置电机速度                                  #速度的单位是 rad/s
     def set_vel(self,id_list,vel_list):
         addr = [0x00, 0x11]
-        possible_callback = {}
-        callback_result = {}
-        id = id_list
-        vel = vel_list
-        for member in id :
-            data = int(vel[id.index(member)]*26.08949)  #换算单位  ecode_number/(rad/s)
-            msg = self.ship_frame(member,addr,data)
-            try:
-                self.bus.send(msg,timeout=0.3)
-            except:
-                print("send failed!")
-                return False
-            finally:
-                possible_callback[member]=self.cal_callbackframe(msg)
-                callback_result[member] = -1
-        self.check_callback(possible_callback,callback_result)
-        for member in id:
-            if callback_result[member] ==False:
-                return [False,callback_result]
-        return True
+        data_dict = {}
+        for member in id_list :
+            data_dict[member] = int(vel_list[id_list.index(member)]*26.08949)  #换算单位  ecode_number/(rad/s)
+        return self.send_and_confirm(id_list, addr, data_dict)
 
-    # 设置加速度模式下--加减速时间                   #单位是100毫秒
+
+    # 设置速度模式下--加减速时间                   #单位是100毫秒,即几个100毫秒
     def set_vel_acctime(self, id_list, acctime_list):
         addr = [0x00, 0x13]
-        possible_callback = {}
-        callback_result = {}
         id = id_list
-        acctime = acctime_list
+        data_dict = {}
         for member in id:
-            data = acctime[id.index(member)]
-            msg = self.ship_frame(member, addr, data)
+            data_dict[member] = acctime_list[member]+2560
+            """
             msg.data[6] = 0x0A
             msg.data[4] = 0x00
             msg.data[5] = 0x00
-            try:
-                self.bus.send(msg, timeout=0.3)
-            except:
-                print("send failed!")
-                return False
-            finally:
-                possible_callback[member] = self.cal_callbackframe(msg)
-                callback_result[member] = -1
-        self.check_callback(possible_callback, callback_result)
-        for member in id:
-            if callback_result[member] == False:
-                return [False, callback_result]
-        return True
+            """
+        return self.send_and_confirm(id_list, addr, data_dict)
+
 
     def set_vel_stop(self,id_list):
         addr = [0x00, 0x10]
-        possible_callback = {}
-        callback_result = {}
-        id = id_list
-        for member in id :
-            data = 0x0F
-            msg = self.ship_frame(member,addr,data)
-            try:
-                self.bus.send(msg,timeout=0.3)
-            except:
-                print("send failed!")
-                return False
-            finally:
-                possible_callback[member]=self.cal_callbackframe(msg)
-                callback_result[member] = -1
-        self.check_callback(possible_callback,callback_result)
-        for member in id:
-            if callback_result[member] ==False:
-                return [False,callback_result]
-        return True
+        data_dict = {}
+        for member in id_list:
+            data_dict[member] = 0x0F
+        return self.send_and_confirm(id_list, addr, data_dict)
+
     # 检查反馈报文
     # 设置检测时间变量
     # 将报文反馈结果存储
