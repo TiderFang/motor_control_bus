@@ -35,7 +35,6 @@ class ZL_motor_control(MotorControlBus):
         self.bitrate = bitrate
         self.bustype = bustype
         self.timout = 0.3
-        self.id = id_list
         #打开bus
         self.open_bus()
         self.status = {}
@@ -115,7 +114,7 @@ class ZL_motor_control(MotorControlBus):
             return False
 
     # 同一的发送以及确认过程
-    # @@ id_list是从站号  @@ addr:寄存器地址  @@ data_dict:数据字典[从站号：数据] @@ possible_callback:可能的反馈报文  @@callback_resualt:返回值
+    # id_list是从站号   addr:寄存器地址  data_dict:数据字典[从站号：数据] possible_callback:可能的反馈报文  callback_resualt:返回值
     def send_and_confirm(self,id_list,addr,data_dict):
         possible_callback={}
         callback_result={}
@@ -156,6 +155,7 @@ class ZL_motor_control(MotorControlBus):
         return self.send_and_confirm(id_list,addr,data_dict)
 
     # 设置电机模式
+    # 2F --速度 3F --位置  8F --力矩
     def set_mode(self,id_list,data_dict):
         addr = [0x00, 0x19]
         return self.send_and_confirm(id_list, addr, data_dict)
@@ -195,7 +195,6 @@ class ZL_motor_control(MotorControlBus):
         for member in id_list:
             data_dict[member] = int(trapvel_list[id_list.index(member)]*22.64331)  #换算单位,最大限速1000RPM,即104.666
         return self.send_and_confirm(id_list, addr, data_dict)
-
 
     # 设置电机速度                                  #速度的单位是 rad/s
     def set_vel(self,id_list,vel_list):
@@ -331,3 +330,5 @@ class ZL_motor_control(MotorControlBus):
             self.status[recv_msg.arbitration_id]["Vel"] = Vel/8192*3000*(2*3.14/60) #单位为rad/s
             self.status[recv_msg.arbitration_id]["I"] = I/100   #单位为安培 A
             return 3
+
+    def
