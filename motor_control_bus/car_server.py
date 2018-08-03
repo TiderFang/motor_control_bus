@@ -1,4 +1,4 @@
-# /usr/bin/env python
+#!/usr/bin/env python
 # -*-coding:UTF-8 -*-
 """
 car server文件，是car类的client类，执行下列功能：
@@ -20,6 +20,7 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from std_msgs.msg import String
 import tf
+from SetMode.srv import *
 
 import _thread
 
@@ -47,6 +48,24 @@ def vel_callback(msg,diffcar):
     v = msg.linear.x
     w = msg.angular.z
     diffcar.set_car_vel(v,w)
+
+    # SetMode  未定义srv类型：其内容包括：
+    # ---req    String request : run_mode   config_mode
+    # ---Res    Bool   answer :  True       Fasle
+def set_mode(req,diffcar):
+    if req.request == 'run_mode':
+        diffcar.run_mode()
+        rospy.loginfo("进入运行模式！")
+        return SetModeResponse(True)
+    else:
+        diffcar.config_mode()
+        rospy.loginfo("进入配置模式！")
+        return SetModeResponse(True)
+
+def mode_server(diffcar):
+    s = rospy.Server("mode_server",SetMode,set_mode,(diffcar))
+    rospy.loginfo("mode server opened!")
+    rospy.spin()
 
 if __name__ == '__main__':
 
@@ -112,10 +131,10 @@ if __name__ == '__main__':
     finally:
         rospy.loginfo("odom thread created！ begin to pub odom info and transform from odom_link to base_link")
 
-    # mode service
+    # mode service thread
+    # 建立两个service:一个service用于进入run_mode; 一个service用于进入config_mode
+    _thread.start_new(mode_server,(diff_car))
 
-    """
-    """
     # 默认进入 RunMode
     car.run_mode()
     # 建立 cmd_vel 的subscriber
@@ -123,6 +142,7 @@ if __name__ == '__main__':
     # 判断 car 处于 run_mode 还是 config_mode
     while True:
         if car.isRunMode:
+            # 判断是否有消息需要处理
             rospy.spinOnce()
             diff_car.update_status()
         else:

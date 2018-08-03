@@ -1,4 +1,4 @@
-# /usr/bin/env python
+#!/usr/bin/env python
 #-*_coding:UTF-8-*-
 """
 ZL_motor_contorl类是中菱轮毂电机的motor_control_bus的具体实现。
