@@ -427,7 +427,19 @@ class ZL_motor_control(MotorControlBus):
             self.status[recv_msg.arbitration_id]["Vel"] = Vel/8192*3000*(2*3.14/60) #单位为rad/s
             self.status[recv_msg.arbitration_id]["I"] = I/100   #单位为安培 A
             return 3
-
+    
+    # set PID
+    def set_PID(self,P,I,D):
+        return True
+    
+    def set_Acc(self,acc):
+        return True
+    
+    def set_acctime(self,time):
+        return True
+    
+    def set_maxvel(self,maxvel):
+        return True
 
 """test"""
 """
@@ -447,8 +459,8 @@ class ZL_motor_control(MotorControlBus):
     -read_status(recv_msg)
 """
 
-def test_send():
-    bus = ZL_motor_control('com20', 460800, 460800, {1})
+def test_send(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.bus.ser.setDTR(False)
     msg = Message(extended_id=False)
@@ -460,8 +472,8 @@ def test_send():
     bus.close_bus()
     bus.logger.debug("\n\n")
 
-def test_recv():
-    bus = ZL_motor_control('com20', 460800, 460800, {1})
+def test_recv(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.bus.ser.setDTR(False)
     msg = Message(extended_id=False)
@@ -475,45 +487,45 @@ def test_recv():
     bus.close_bus()
     bus.logger.debug("\n")
 
-def test_enable():
-    bus = ZL_motor_control('com20', 460800, 460800, {1})
+def test_enable(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.bus.ser.setDTR(False)
     bus.enable([1])
     bus.close_bus()
 
-def test_disable():
-    bus = ZL_motor_control('com20', 460800, 460800, {1})
+def test_disable(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.bus.ser.setDTR(False)
     bus.disable([1])
     bus.close_bus()
 
-def test_setmode():
-    bus = ZL_motor_control('com20', 460800, 460800, {1})
+def test_setmode(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.bus.ser.setDTR(False)
     bus.logger.debug(bus.set_mode([1],{1:0x3f}))
     bus.close_bus()
 
-def test_set_absolte_posmode():
-    bus = ZL_motor_control('com20', 460800, 460800, {1})
+def test_set_absolte_posmode(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.bus.ser.setDTR(False)
     bus.logger.debug(bus.set_mode([1],{1:0x3f}))
     bus.logger.debug(bus.set_posmode_absolutemode([1]))
     bus.close_bus()
 
-def test_set_relative_posmode():
-    bus = ZL_motor_control('com20', 460800, 460800, {1})
+def test_set_relative_posmode(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.bus.ser.setDTR(False)
     bus.logger.debug(bus.set_mode([1],{1:0x3f}))
     bus.logger.debug(bus.set_posmode_relativemode([1]))
     bus.close_bus()
 
-def test_relative_pos():
-    bus = ZL_motor_control('com20', 460800, 460800, {1})
+def test_relative_pos(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.bus.ser.setDTR(False)
     bus.enable([1])
@@ -523,8 +535,8 @@ def test_relative_pos():
     bus.set_pos([1],{1:10000})
     bus.close_bus()
 
-def test_absolute_pos():
-    bus = ZL_motor_control('com20', 460800, 460800, {1})
+def test_absolute_pos(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.bus.ser.setDTR(False)
     bus.enable([1])
@@ -534,8 +546,8 @@ def test_absolute_pos():
     bus.set_pos([1],{1:10000})
     bus.close_bus()
 
-def test_set_vel():
-    bus = ZL_motor_control('com20', 115200, 115200, {1})
+def test_set_vel(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.logger.debug(bus.bus.ser)
     bus.bus.ser.setDTR(False)
@@ -553,8 +565,8 @@ def test_set_vel():
             break
     bus.close_bus()
 
-def test_set_posacctime():
-    bus = ZL_motor_control('com20', 460800, 460800, {1})
+def test_set_posacctime(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.bus.ser.setDTR(False)
     bus.logger.debug(bus.set_mode([1],{1:0x3f}))
@@ -562,8 +574,8 @@ def test_set_posacctime():
     bus.set_pos_acctime([1],{1:20})
     bus.close_bus()
 
-def test_set_vel_acctime():
-    bus = ZL_motor_control('com20', 460800, 460800, {1})
+def test_set_vel_acctime(channel):
+    bus = ZL_motor_control(channel, 115200, 115200, {1})
     bus.open_bus()
     bus.bus.ser.setDTR(False)
     bus.logger.debug(bus.set_mode([1], {1: 0x2f}))
@@ -572,12 +584,13 @@ def test_set_vel_acctime():
 
 
 if __name__=="__main__":
-    #test_send()
-    #test_recv()
-    #test_enable()
-    #test_disable()
-    #test_setmode()
-    #test_relative_pos()
-    #test_absolute_pos()
-    #test_set_vel()
-    #test_set_posacctime()
+    channel = '/dev/ttyUSB0'
+    #test_send(channel)
+    #test_recv(channel)
+    #test_enable(channel)
+    #test_disable(channel)
+    #test_setmode(channel)
+    #test_relative_pos(channel)
+    #test_absolute_pos(channel)
+    #test_set_vel(channel)
+    #test_set_posacctime(channel)
