@@ -1,0 +1,8 @@
+2018/8/11
+成果：
+	1.node节点基本可以工作
+
+问题带解决：
+	1. rospy.Subscriber不需要rospy.spin(),即可自动进行回调处理。
+	2. vel_callback回调函数处理 keyboard_verp.launch 发送的cmd_vel太慢，换句话说，keyboard_vrep.launch堆积了大量的cmd_vel，以至于vel_callback中收到的msg的变化总是滞后于keyboard_vrep.launch中的命令变化。
+	需要做就是  及时清空cmd_vel队列

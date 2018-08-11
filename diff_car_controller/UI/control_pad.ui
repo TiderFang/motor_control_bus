@@ -1,0 +1,441 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface>
+  <object class="tk.Menu" id="Menu_1" />
+  <object class="tk.Toplevel" id="configapp">
+    <property name="height">200</property>
+    <property name="title" translatable="yes">参数设置</property>
+    <property name="width">200</property>
+    <child>
+      <object class="ttk.Frame" id="config_window">
+        <property name="height">0</property>
+        <property name="takefocus">true</property>
+        <property name="width">0</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="propagate">True</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="title_label">
+            <property name="font">{k} 20 {}</property>
+            <property name="text" translatable="yes">设置模式</property>
+            <property name="underline">0</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="ipadx">0</property>
+              <property name="ipady">0</property>
+              <property name="padx">0</property>
+              <property name="pady">20</property>
+              <property name="propagate">True</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="run_mode_button">
+            <property name="command">on_run_mode_button</property>
+            <property name="default">normal</property>
+            <property name="state">normal</property>
+            <property name="text" translatable="yes">Config Mode --&gt; Run Mode</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="pady">10</property>
+              <property name="propagate">True</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="open_bus_button">
+            <property name="text" translatable="yes">设置开始</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="pady">20</property>
+              <property name="propagate">True</property>
+              <property name="row">2</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Combobox" id="wheel_id_select_combox">
+            <property name="state">disabled</property>
+            <property name="textvariable">string:wheel_id</property>
+            <property name="validate">key</property>
+            <property name="values">0 1 2 3 4 5</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="pady">10</property>
+              <property name="propagate">True</property>
+              <property name="row">3</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="wheel_id_select_label">
+            <property name="text" translatable="yes">选择轮子</property>
+            <property name="textvariable">string:text</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="padx">0</property>
+              <property name="pady">0</property>
+              <property name="propagate">True</property>
+              <property name="row">4</property>
+              <property name="sticky">n</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Combobox" id="param_item_combox">
+            <property name="state">disabled</property>
+            <property name="values">pos_acc pos_vel vel_acc </property>
+            <layout>
+              <property name="column">0</property>
+              <property name="padx">0</property>
+              <property name="pady">10</property>
+              <property name="propagate">True</property>
+              <property name="row">5</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="param_item_label">
+            <property name="text" translatable="yes">选择需要设置的参数</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="padx">0</property>
+              <property name="propagate">True</property>
+              <property name="row">6</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="tk.Text" id="setparam_textbox">
+            <property name="height">1</property>
+            <property name="insertontime">0</property>
+            <property name="insertunfocussed">none</property>
+            <property name="startline">1</property>
+            <property name="state">disabled</property>
+            <property name="text" translatable="yes">请输入设置的参数值</property>
+            <property name="width">25</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="padx">40</property>
+              <property name="pady">20</property>
+              <property name="propagate">True</property>
+              <property name="row">7</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="set_bottun">
+            <property name="command">on_set_buttun</property>
+            <property name="state">disabled</property>
+            <property name="text" translatable="yes">设置</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="padx">0</property>
+              <property name="pady">10</property>
+              <property name="propagate">True</property>
+              <property name="row">8</property>
+              <property name="sticky">n</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="config_done_button">
+            <property name="state">disabled</property>
+            <property name="text" translatable="yes">设置完毕,并关闭</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="padx">10</property>
+              <property name="pady">20</property>
+              <property name="propagate">True</property>
+              <property name="row">9</property>
+              <property name="sticky">s</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="tk.Toplevel" id="runapp">
+    <property name="height">200</property>
+    <property name="title" translatable="yes">手动控制</property>
+    <property name="width">200</property>
+    <child>
+      <object class="ttk.Frame" id="run_window">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout>
+          <property name="column">0</property>
+          <property name="propagate">True</property>
+          <property name="row">0</property>
+          <property name="sticky">nsew</property>
+        </layout>
+        <child>
+          <object class="ttk.Label" id="title_label">
+            <property name="font">{k} 20 {}</property>
+            <property name="text" translatable="yes">手动控制模式</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="pady">20</property>
+              <property name="propagate">True</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="config_mode_button">
+            <property name="command">on_config_mode_button</property>
+            <property name="default">normal</property>
+            <property name="state">normal</property>
+            <property name="text" translatable="yes">Run Mode--&gt;Config Mode</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">1</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="speed_v_label">
+            <property name="text" translatable="yes">设置速度</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="padx">35</property>
+              <property name="pady">20</property>
+              <property name="propagate">True</property>
+              <property name="row">2</property>
+              <property name="sticky">ne</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="tk.Text" id="speed_v_textbox">
+            <property name="height">1</property>
+            <property name="text" translatable="yes">0.0</property>
+            <property name="width">10</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="padx">20</property>
+              <property name="propagate">True</property>
+              <property name="row">3</property>
+              <property name="sticky">e</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="v_label">
+            <property name="text" translatable="yes">V(m/s)</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="padx">20</property>
+              <property name="pady">10</property>
+              <property name="propagate">True</property>
+              <property name="row">3</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="w_label">
+            <property name="text" translatable="yes">W(rad/s)</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="padx">20</property>
+              <property name="pady">10</property>
+              <property name="propagate">True</property>
+              <property name="row">4</property>
+              <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="tk.Text" id="w_set_textbox">
+            <property name="height">1</property>
+            <property name="insertunfocussed">none</property>
+            <property name="text" translatable="yes">0.0</property>
+            <property name="width">10</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="padx">20</property>
+              <property name="propagate">True</property>
+              <property name="row">4</property>
+              <property name="sticky">e</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="go_up_button">
+            <property name="text" translatable="yes">forward</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">5</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="go_left_button">
+            <property name="text" translatable="yes">go left</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">6</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="go_left_up_button">
+            <property name="text" translatable="yes">left_up</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="pady">10</property>
+              <property name="propagate">True</property>
+              <property name="row">5</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="go_left_back_button">
+            <property name="text" translatable="yes">left_back</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">7</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="stop_button">
+            <property name="text" translatable="yes">stop</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="pady">10</property>
+              <property name="propagate">True</property>
+              <property name="row">6</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="go_back_button">
+            <property name="text" translatable="yes">back</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="pady">10</property>
+              <property name="propagate">True</property>
+              <property name="row">7</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="go_right_up_button">
+            <property name="text" translatable="yes">right_up</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">5</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="go_right_button">
+            <property name="text" translatable="yes">go right</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">6</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="go_right_back_button">
+            <property name="text" translatable="yes">right back</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">7</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Separator" id="seprator">
+            <property name="orient">horizontal</property>
+            <property name="takefocus">false</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">8</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="odom_label">
+            <property name="font">{k} 20 {}</property>
+            <property name="text" translatable="yes">速度信息</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="pady">20</property>
+              <property name="propagate">True</property>
+              <property name="row">9</property>
+              <property name="sticky">n</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="actual_speed_v_label">
+            <property name="text" translatable="yes">实际速度V（m/s):</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="padx">10</property>
+              <property name="propagate">True</property>
+              <property name="row">10</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="actual_speed_v_show">
+            <property name="text" translatable="yes">0.0</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">10</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="actual_speed_w_label">
+            <property name="text" translatable="yes">实际速度w(rad/s):</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">11</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Label" id="actual_speed_w_show">
+            <property name="text" translatable="yes">0.0</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="pady">20</property>
+              <property name="propagate">True</property>
+              <property name="row">11</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Button" id="enable_button">
+            <property name="text" translatable="yes">使能</property>
+            <layout>
+              <property name="column">1</property>
+              <property name="propagate">True</property>
+              <property name="row">2</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
