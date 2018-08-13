@@ -1,9 +1,26 @@
 2018/8/11
 成果：
 	1.node节点基本可以工作
-	2.通过给ZL_motor_control类的send()函数中，多发送[0x00,0x00,0x00]这些无效字节，解决了发送数据丢失的问题，但是丢失的原因还未弄清楚。
 
-问题待解决：
+问题带解决：
 	1. rospy.Subscriber不需要rospy.spin(),即可自动进行回调处理。
 	2. vel_callback回调函数处理 keyboard_verp.launch 发送的cmd_vel太慢，换句话说，keyboard_vrep.launch堆积了大量的cmd_vel，以至于vel_callback中收到的msg的变化总是滞后于keyboard_vrep.launch中的命令变化。
 	需要做就是  及时清空cmd_vel队列
+	
+2018/8/13
+成果：
+	1.解决了node对cmd_vel响应太慢的问题。
+		a.在设置recv timeout=0.3时，响应时间平均为0.7216;设置recv timeout =0.03时，响应时间为0.3s;这两个响应时间均大于cmd_vel发布时间0.1s;
+		b.尝试了三种解决方法：
+			i.减慢心跳报文的发送速度，其结果证明影响不大，不可行。
+			ii.减少cmd_vel的发送频率。cmd_vel的发送频率直接影响了控制效果，因此我认为该措施不可取，无助于控制效果的改善。
+			iii.发送与报文处理分开进行。即，不管命令报文有没有发送成功，只管状态报文。为此：
+				I.重新定义了一个函数在ZL_motor_control类中：only_send_not_confirm;该函数只进行发送，不进行报文读取。
+				II.修改了read_status函数，使之对反馈报文能够适应。
+		结果证明名，第三种方法产生了好的实际效果
+	2.解决了odom的发布问题，提高了状态报文的发送速率,现为50ms;odom的发布速率为20Hz。先前odom发布消息不正常的原因是update_status函数中调用了set_car_status函数，而非set_odom函数。
+
+问题待解决：
+	1. GUI界面
+	2. 代码的复查，需要反思代码中的错误。
+	3. 总结

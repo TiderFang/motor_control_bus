@@ -20,6 +20,7 @@ from can import Message
 from motor_control_bus import MotorControlBus
 import copy
 import logging
+import rospy
 
 class ZL_motor_control(MotorControlBus):
 
@@ -30,7 +31,7 @@ class ZL_motor_control(MotorControlBus):
         baudrate:表示波特率
         bustype:表示can bus的类型
     """
-    def __init__(self, channel, bitrate, baudrate, id_list, bustype = 'serial',timeout = 0.6):
+    def __init__(self, channel, bitrate, baudrate, id_list, bustype = 'serial',timeout = 0.01):
         self.logger = logging.getLogger("ZL_motor_control_logger")
         self.loghandle = logging.StreamHandler()
         self.logger.addHandler(self.loghandle)
@@ -179,6 +180,24 @@ class ZL_motor_control(MotorControlBus):
             print("        send failed!")
             return False
 
+    # 只执行发送操作,不判断命令接受状态
+    def only_send_not_confirm(self,id_list,addr,data_dict):
+        self.logger.debug("get in self.send_and_confrim ")
+        for member in id_list:
+            data = data_dict[member]
+            #print("member is :",member)
+            msg = self.ship_frame(member,addr,data)
+            try:
+                #self.send(msg,timeout=self.timeout)
+                self.send(msg)
+                #print('send msg:',msg)
+                #self.logger.debug("send a message in self.send_and_confirm()")
+            except:
+                print("send failed!")
+                return False
+        return True
+            
+
     # 同一的发送以及确认过程
     # id_list是从站号   addr:寄存器地址  data_dict:数据字典[从站号：数据] possible_callback:可能的反馈报文  callback_resualt:返回值
     def send_and_confirm(self,id_list,addr,data_dict):
@@ -255,7 +274,7 @@ class ZL_motor_control(MotorControlBus):
 		            if(result == True):
 		                callback_id.remove(member)
 		                callback_result[member] = True
-		                print("id",member,"get the command")
+		                #print("id",member,"get the command")
 		            elif (result == False):
 		                callback_id.remove(member)
 		                callback_result[member] = False
@@ -320,7 +339,12 @@ class ZL_motor_control(MotorControlBus):
         data_dict = {}
         for member in id_list:
             data_dict[member] = 0x1F
-        return self.send_and_confirm(id_list,addr,data_dict)
+        result=self.send_and_confirm(id_list,addr,data_dict)
+        if result == True:
+            rospy.loginfo("enable success")
+        else:
+            rospy.loginfo("enable failed")
+        return result
 
     # 电机失能
     # 要求能够向多个电机同时发送
@@ -329,7 +353,12 @@ class ZL_motor_control(MotorControlBus):
         data_dict = {}
         for member in id_list:
             data_dict[member] = 0x0F
-        return self.send_and_confirm(id_list,addr,data_dict)
+        result=self.send_and_confirm(id_list,addr,data_dict)
+        if result == True:
+            rospy.loginfo("enable success")
+        else:
+            rospy.loginfo("enable failed")
+        return result
 
     # 设置电机模式
     # 2F --速度 3F --位置  8F --力矩
@@ -380,7 +409,14 @@ class ZL_motor_control(MotorControlBus):
         for member in id_list :
             data_dict[member] = int(vel_dict[member]*26.08949)  #换算单位  ecode_number/(rad/s)
         return self.send_and_confirm(id_list, addr, data_dict)
-
+    
+    # 设置电机速度，但不管反馈
+    def only_set_vel(self,id_list,vel_dict):
+        addr = [0x00, 0x11]
+        data_dict = {}
+        for member in id_list :
+            data_dict[member] = int(vel_dict[member]*26.08949)  #换算单位  ecode_number/(rad/s)
+        return self.only_send_not_confirm(id_list, addr, data_dict)
 
     # 设置速度模式下--加减速时间                   #单位是100毫秒,即几个100毫秒
     def set_vel_acctime(self, id_list, acctime_dict):
@@ -454,7 +490,9 @@ class ZL_motor_control(MotorControlBus):
                 self.status[recv_msg.arbitration_id]["I"] = I   
                 #print('self.status:',self.status)
                 return 3
-    
+            else:
+                return 0
+            
     # set PID
     def set_PID(self,P,I,D):
         return True

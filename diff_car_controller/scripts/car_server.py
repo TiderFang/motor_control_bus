@@ -23,6 +23,7 @@ import tf
 from diff_car_controller.srv import *
 
 import threading
+import time
 try:
     import _thread
 except:
@@ -35,7 +36,7 @@ def odom_puber(odom_info,puber):
     msg.header.frame_id = 'odom_link'
     msg.child_frame_id = 'base_link'
     br = tf.TransformBroadcaster()
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(20)
     while not rospy.is_shutdown():
         msg.header.seq = msg.header.seq + 1
         msg.header.stamp = rospy.Time.now()
@@ -54,23 +55,27 @@ def odom_puber(odom_info,puber):
         rate.sleep()
 
 def vel_callback(msg,arg):
+    start = time.time()
     diff_car = arg[0]
     #print(msg)
-    
+    # 处理速度，取决于/cmd_vel的发布速度。
     if diff_car.isRunMode:
         v = msg.linear.x
         #v = 5  #rad/s
         w = msg.angular.z
         #w = 5
-        print("v",v,"w",w)
+        #print("v",v,"w",w)
         # 使用isSending避免主线程在本线程发送数据的时候，调用update函数，破坏本线程调用update函数。
-        diff_car.isSending = True
-        if  v !=0 or w !=0:
-            print("let's move the car")
-            mutex.acquire()
-            diff_car.set_car_vel(v,w)
-            mutex.release()
-            diff_car.isSending = False
+        # 由于不关心，发送是否成功，因此，在此决定
+        #diff_car.isSending = True
+        #if  v !=0 or w !=0:
+            #print("let's move the car")
+            #mutex.acquire()
+        diff_car.set_car_vel(v,w)
+            #mutex.release()
+        diff_car.isSending = False
+    #timepass = start - time.time()
+    #print("time pass is:",timepass)
         
  
 
@@ -172,18 +177,23 @@ if __name__ == '__main__':
     # 判断 car 处于 run_mode 还是 config_mode
     while not rospy.is_shutdown():
         if diff_car.isRunMode:
+            #if i == 0 :
+                #rospy.loginfo("car is in run mode!")
             #避免过于频繁的读取（当buffer没有可读取内容时，会出现问题。）
-            rospy.Rate(10)
+            #rospy.Rate(10)
             # 判断是否有消息需要处理
             #rospy.spinOnce()
-            if not diff_car.isSending:
-                mutex.acquire()
-                diff_car.update_status()  
-                print("update times:",i)
-                i = i + 1
-                mutex.release()
+            #if not diff_car.isSending:
+            #mutex.acquire()
+            #i = 1
+            diff_car.update_status()  
+            #print(diff_car.bus.status)
+            #print("update times:",i)
+            #i = i + 1
+            #mutex.release()
         else:
             # do notiong just update status
-            rospy.loginfo("car is in configure mode!")
+            #if i == 1:
+                #rospy.loginfo("car is in configure mode!")
             diff_car.update_status()
-            pass
+            #i = 0

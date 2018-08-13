@@ -32,25 +32,28 @@ class car(object):
     #根据车的速度，计算轮子的速度
     def set_car_vel(self,v,w):
         data_dict = self.cal_wheel_vel(v,w)
-        return self.bus.set_vel(self.id_list,data_dict)
+        return self.bus.only_set_vel(self.id_list,data_dict)
 
-    # 获取车的速度和转速
-    def get_car_status(self):
-        w1 = self.bus.status[self.id_list[0]]["Vel"]
-        w2 = self.bus.status[self.id_list[1]]["Vel"]
-        w = (w1+w2)*self.diameter/2/self.diameter
-        v = (w1-w2)*self.diameter/2
-        return [v,w]
 
     # 计算轮子速度
     def cal_wheel_vel(self,v,w):
         w1 = 2*v/self.diameter - w*self.distance/self.diameter
         w2 = -(2*v/self.diameter + w*self.distance/self.diameter)
         return {self.id_list[0]:w1,self.id_list[1]:w2}
-
+    
+    # 获取车的速度和转速
+    def get_car_status(self):
+        #print(self.bus.status)
+        w1 = self.bus.status[self.id_list[0]]["Vel"]
+        w2 = self.bus.status[self.id_list[1]]["Vel"]
+        w = (w1+w2)*self.diameter/2/self.diameter
+        v = (w1-w2)*self.diameter/2
+        return [v,w]
+    
     #设置车辆odom信息
     def set_odom(self):
-        dt = 0.1
+        dt = 0.05
+        #print("set odom")
         v,w = self.get_car_status()
         self.odom['x']= self.odom['x'] + v*dt*cos(self.odom['theta'])
         self.odom['y']= self.odom['y'] + v*dt*sin(self.odom['theta'])
@@ -89,8 +92,9 @@ class car(object):
             return False
         finally:
             if recv_msg != None:
+                #print("update car status")
                 self.bus.read_status(recv_msg)
-                self.get_car_status()
+                self.set_odom()
                 
                 
 def test_set_car_vel(v,w):
