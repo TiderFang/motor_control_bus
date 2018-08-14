@@ -174,7 +174,7 @@
           <property name="sticky">nsew</property>
         </layout>
         <child>
-          <object class="ttk.Label" id="title_label">
+          <object class="ttk.Label" id="title_lable">
             <property name="font">{k} 20 {}</property>
             <property name="text" translatable="yes">手动控制模式</property>
             <layout>
@@ -212,20 +212,6 @@
           </object>
         </child>
         <child>
-          <object class="tk.Text" id="speed_v_textbox">
-            <property name="height">1</property>
-            <property name="text" translatable="yes">0.0</property>
-            <property name="width">10</property>
-            <layout>
-              <property name="column">2</property>
-              <property name="padx">20</property>
-              <property name="propagate">True</property>
-              <property name="row">3</property>
-              <property name="sticky">e</property>
-            </layout>
-          </object>
-        </child>
-        <child>
           <object class="ttk.Label" id="v_label">
             <property name="text" translatable="yes">V(m/s)</property>
             <layout>
@@ -235,6 +221,18 @@
               <property name="propagate">True</property>
               <property name="row">3</property>
               <property name="sticky">w</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Spinbox" id="speed_v_textbox">
+            <property name="state">disabled</property>
+            <property name="textvariable">double:vel</property>
+            <property name="wrap">false</property>
+            <layout>
+              <property name="column">2</property>
+              <property name="propagate">True</property>
+              <property name="row">3</property>
             </layout>
           </object>
         </child>
@@ -252,22 +250,22 @@
           </object>
         </child>
         <child>
-          <object class="tk.Text" id="w_set_textbox">
-            <property name="height">1</property>
-            <property name="insertunfocussed">none</property>
+          <object class="ttk.Spinbox" id="speed_w_textbox">
+            <property name="state">disabled</property>
             <property name="text" translatable="yes">0.0</property>
-            <property name="width">10</property>
+            <property name="textvariable">double:wel</property>
             <layout>
               <property name="column">2</property>
-              <property name="padx">20</property>
               <property name="propagate">True</property>
               <property name="row">4</property>
-              <property name="sticky">e</property>
             </layout>
           </object>
         </child>
         <child>
           <object class="ttk.Button" id="go_up_button">
+            <property name="command">on_go_up_button</property>
+            <property name="default">normal</property>
+            <property name="state">disabled</property>
             <property name="text" translatable="yes">forward</property>
             <layout>
               <property name="column">1</property>
@@ -278,6 +276,8 @@
         </child>
         <child>
           <object class="ttk.Button" id="go_left_button">
+            <property name="command">on_go_left_button</property>
+            <property name="state">disabled</property>
             <property name="text" translatable="yes">go left</property>
             <layout>
               <property name="column">0</property>
@@ -288,6 +288,8 @@
         </child>
         <child>
           <object class="ttk.Button" id="go_left_up_button">
+            <property name="command">on_go_left_up_button</property>
+            <property name="state">disabled</property>
             <property name="text" translatable="yes">left_up</property>
             <layout>
               <property name="column">0</property>
@@ -299,6 +301,8 @@
         </child>
         <child>
           <object class="ttk.Button" id="go_left_back_button">
+            <property name="command">on_go_left_back_button</property>
+            <property name="state">disabled</property>
             <property name="text" translatable="yes">left_back</property>
             <layout>
               <property name="column">0</property>
@@ -309,6 +313,8 @@
         </child>
         <child>
           <object class="ttk.Button" id="stop_button">
+            <property name="command">on_stop_button</property>
+            <property name="state">disabled</property>
             <property name="text" translatable="yes">stop</property>
             <layout>
               <property name="column">1</property>
@@ -320,6 +326,8 @@
         </child>
         <child>
           <object class="ttk.Button" id="go_back_button">
+            <property name="command">on_go_back_button</property>
+            <property name="state">disabled</property>
             <property name="text" translatable="yes">back</property>
             <layout>
               <property name="column">1</property>
@@ -331,6 +339,8 @@
         </child>
         <child>
           <object class="ttk.Button" id="go_right_up_button">
+            <property name="command">on_go_right_up_button</property>
+            <property name="state">disabled</property>
             <property name="text" translatable="yes">right_up</property>
             <layout>
               <property name="column">2</property>
@@ -341,6 +351,8 @@
         </child>
         <child>
           <object class="ttk.Button" id="go_right_button">
+            <property name="command">on_go_right_button</property>
+            <property name="state">disabled</property>
             <property name="text" translatable="yes">go right</property>
             <layout>
               <property name="column">2</property>
@@ -351,7 +363,9 @@
         </child>
         <child>
           <object class="ttk.Button" id="go_right_back_button">
-            <property name="text" translatable="yes">right back</property>
+            <property name="command">on_go_right_back_button</property>
+            <property name="state">disabled</property>
+            <property name="text" translatable="yes">right_back</property>
             <layout>
               <property name="column">2</property>
               <property name="propagate">True</property>
@@ -427,7 +441,9 @@
         </child>
         <child>
           <object class="ttk.Button" id="enable_button">
-            <property name="text" translatable="yes">使能</property>
+            <property name="command">on_enable_button</property>
+            <property name="state">normal</property>
+            <property name="text" translatable="yes">enable hand control</property>
             <layout>
               <property name="column">1</property>
               <property name="propagate">True</property>
