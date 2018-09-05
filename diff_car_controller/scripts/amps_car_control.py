@@ -9,7 +9,6 @@
 
 from amps_motor_control import amps_motor_control
 # class ZL_motor_control
-import can
 from math import *
 import time
 # 外部设置bus，然后传递给car
@@ -44,8 +43,8 @@ class car(object):
     # 获取车的速度和转速
     def get_car_status(self):
         #print(self.bus.status)
-        w1 = self.bus.status[self.id_list[0]]["Vel"]
-        w2 = self.bus.status[self.id_list[1]]["Vel"]
+        w1 = self.bus.status[self.id_list[0]]
+        w2 = self.bus.status[self.id_list[1]]
         w = (w1+w2)*self.diameter/2/self.diameter
         v = (w1-w2)*self.diameter/2
         return [v,w]
@@ -63,7 +62,7 @@ class car(object):
 
     # 进入config mode,关闭bus
     def config_mode(self):
-        self.bus.bus.ser.setDTR(False)
+        #self.bus.bus.ser.setDTR(False)
         self.bus.set_vel_stop(self.id_list)
         self.bus.disable(self.id_list)
         self.isRunMode = False
@@ -72,11 +71,11 @@ class car(object):
     # 进入run_mode，就可以进行速度控制了
     def run_mode(self):
         self.bus.open_bus()
-        self.bus.bus.ser.setDTR(False)
+        #self.bus.setDTR(False)
         # 设置运动模式--速度模式
         mode = {}
         for member in self.id_list:
-            mode[member] = 0x2F
+            mode[member] = 0x3
         self.bus.set_mode(self.id_list,mode)
         self.bus.enable(self.id_list)
         self.isRunMode = True
@@ -86,7 +85,7 @@ class car(object):
     def update_status(self):
         recv_msg = None
         try:
-            self.bus.read_status()
+            self.bus.read_status(self.id_list)
         except can.CanError as e:
             print(e)
             return False
@@ -95,14 +94,9 @@ class car(object):
             self.set_odom()
                 
                 
-def test_set_car_vel(v,w):
-    bus_channel = "/dev/wheels_ZL"
-    bus_bitrate = bus_baudrate = 115200
-    bus_id_list = [1,2]
-    bus_type='serial'
-    wheel_diameter = 100
-    wheel_distance = 100
-    bus = amps_motor_control_bus(bus_channel, bus_baudrate)
+def test_set_car_vel(v,w,bus):
+    bus = amps_motor_control(bus_channel, bus_baudrate)
+    #bus.open_bus()
     diff_car = car(wheel_diameter, wheel_distance, bus, bus_id_list)
     diff_car.run_mode()
     start = time.time()
@@ -112,31 +106,37 @@ def test_set_car_vel(v,w):
             break
 
 def test_car_run_mode():
-    bus_channel = "/dev/wheels_ZL"
+    bus_channel = "/dev/ttyUSB0"
     bus_bitrate = bus_baudrate = 115200
     bus_id_list = [1,2]
     bus_type='serial'
     wheel_diameter = 100
     wheel_distance = 100
     bus = amps_motor_control(bus_channel, bus_baudrate)
+    #bus.open_bus()
     diff_car = car(wheel_diameter,wheel_distance,bus,bus_id_list)
     diff_car.run_mode()
     
 def test_car_config_mode():
-    bus_channel = "/dev/wheels_ZL"
+    bus_channel = "/dev/ttyUSB0"
     bus_bitrate = bus_baudrate = 115200
     bus_id_list = [1, 2]
     bus_type='serial'
     wheel_diameter = 100
     wheel_distance = 100
     bus = amps_motor_control(bus_channel, bus_baudrate)
-    bus.open_bus()
     diff_car = car(wheel_diameter,wheel_distance,bus,bus_id_list)
     diff_car.config_mode()
 
 if __name__ == '__main__':
     #test_car_config_mode()
     #test_car_run_mode()
-    test_set_car_vel(5,5)
+    bus_channel = "/dev/ttyUSB0"
+    bus_bitrate = bus_baudrate = 115200
+    bus_id_list = [1,2]
+    wheel_diameter = 100
+    wheel_distance = 100
+    bus = amps_motor_control(bus_channel, bus_baudrate)
+    test_set_car_vel(0,0,bus)
     
     

@@ -13,7 +13,7 @@ car server文件，是car类的client类，执行下列功能：
     轮子的控制使用的是cmd_vel，不使用action_server；因此使用简单的topic和service机制
 """
 
-from ampls_car_control import car
+from amps_car_control import car
 from amps_motor_control import amps_motor_control
 import rospy
 from nav_msgs.msg import Odometry
@@ -70,10 +70,13 @@ def vel_callback(msg,arg):
         #diff_car.isSending = True
         #if  v !=0 or w !=0:
             #print("let's move the car")
-            #mutex.acquire()
+        start = time.time()
+        mutex.acquire()
         diff_car.set_car_vel(v,w)
-            #mutex.release()
+        diff_car.update_status()
+        mutex.release()
         diff_car.isSending = False
+        print(time.time()-start)
     #timepass = start - time.time()
     #print("time pass is:",timepass)
         
@@ -123,7 +126,7 @@ if __name__ == '__main__':
     # 设置parameter server
     # bus params
     if not rospy.has_param("~bus_channel"):
-        rospy.set_param("~bus_channel","/dev/wheels_ZL")
+        rospy.set_param("~bus_channel","/dev/ttyUSB0")
     if not rospy.has_param("~bus_baudrate"):
         rospy.set_param("~bus_baudrate",115200)
     if not rospy.has_param("~bus_bitrate"):
@@ -183,14 +186,14 @@ if __name__ == '__main__':
             #rospy.Rate(10)
             # 判断是否有消息需要处理
             #rospy.spinOnce()
-            #if not diff_car.isSending:
-            #mutex.acquire()
+            if not diff_car.isSending:
+                mutex.acquire()
             #i = 1
-            diff_car.update_status()  
+                diff_car.update_status()  
             #print(diff_car.bus.status)
             #print("update times:",i)
             #i = i + 1
-            #mutex.release()
+                mutex.release()
         else:
             # do notiong just update status
             #if i == 1:

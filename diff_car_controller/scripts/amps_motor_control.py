@@ -21,29 +21,31 @@
 from __future__ import print_function
 import struct
 import time
-from motor_control_bus import MotorControlBus
+#from motor_control_bus import MotorControlBus
 import copy
 import logging
 import serial
+import asyncio
 
-
-class amps_motor_control(MotorControlBus):
+class amps_motor_control(object):
 
     def __init__(self, channel, baudrate):
         self.channel = channel
         self.baudrate = baudrate
         self.status = {}
+        self.bus = None
 
 
     def open_bus(self):
         try:
-            self.bus = serial.Serial(channel, baudrate, timeout=0.3)
+            self.bus = serial.Serial(self.channel, self.baudrate, timeout=0.3)
+            print("serial port %s openned!" % self.channel)
             # self.bus.open()
+            return True
         except:
             print("bus open failed! can't open serial port:", self.channel)
             return False
-        finally:
-            print("serial port %s openned!" % self.channel)
+            
 
     def close_bus(self):
         self.bus.close()
@@ -91,19 +93,29 @@ class amps_motor_control(MotorControlBus):
         start = time.time()
         msg = bytes()
         while True:
-            msg = msg + self.bus.read(10 - len(msg))
+            temp = self.bus.read(10 - len(msg))
+            msg = msg + temp
             if (time.time() - start) > timeout:
                 print("read failed!")
                 return None
             checksum = 0
             if len(msg) == 10:
-                print(msg)
+                # in python2 : msg is type of str
+                # in python3 : msg is type of bytes
                 for i in range(len(msg) - 1):
-                    checksum = checksum + msg[i]
-                print(checksum & 0xff)
-                print(msg[9])
-                if (checksum & 0xff) == msg[9]:
-                    print("read a message!")
+                    try:
+                        # for python2
+                        checksum = checksum + ord(msg[i])
+                    except:
+                        # for python3
+                        checksum = checksum + msg[i]
+                #print(checksum & 0xff)
+                try:
+                    msg_checksum = ord(msg[9])
+                except:
+                    msg_checksum = msg[9]
+                if (checksum & 0xff) == msg_checksum:
+                    #print("read a message!")
                     return msg
                 else:
                     msg = msg[1:10]
@@ -157,26 +169,21 @@ class amps_motor_control(MotorControlBus):
         addr = [0x70, 0x75]
         error = 0x00
         data = 0x00
-        for id in id_list:
-            msg = self.ship_frame(id, cmd, addr, error, data)
+        recv_msg = {}
+        vel_dict = {}
+        for idnum in id_list:
+            msg = self.ship_frame(idnum, cmd, addr, error, data)
             self.only_send_not_confirm(msg)
-        start = time.time()
-        id_cout = 0
-        while(True):
-            if (time.time() - start) > timeout:
-                return False
-            recv_msg = self.recv()
-            #print("update_status",recv_msg)
-            vel = {}
-            if recv_msg[1] == 0xA2 and recv_msg[2:4] == bytearray(addr):
-                data = recv_msg[7:9]
-                vel[recv_msg[0]] = struct.unpack(">h", data)[0]
-                id_cout = id_cout+1
-                if id_cout == len(id_list):
-                    #print("vel status is ",vel)
-                    for id in id_list:
-                        self.status[id] = vel[id]
-                    return vel
+            recv_msg[idnum] = self.recv()
+        if None not in recv_msg.values():
+            #print(recv_msg)
+            for member in recv_msg.keys():
+                data = recv_msg[member][7:9]
+                self.status[member] = struct.unpack('>h',data)[0]
+            return self.status
+        else:
+            print("update faild!")
+            return False
 
     def set_mode(self, id_list, mode_dict):
         # 3 带加减速控制的速度模式
@@ -187,11 +194,12 @@ class amps_motor_control(MotorControlBus):
         cmd = 0x51
         addr = [0x70, 0x17]
         error = 0x00
-        recv_msg = {}
+        recv_msg = None
         result = True
         for member in id_list:
             msg = self.ship_frame(member, cmd, addr, error, mode_dict[member])
             self.only_send_not_confirm(msg)
+            recv_msg = self.recv()
             if msg is not None:
                 result = (result and (recv_msg[0] == msg[0] and recv_msg[1] == 0x62 and
                                       recv_msg[2] == addr[0] and recv_msg[3] == addr[1]))
@@ -222,22 +230,31 @@ def test_get_vel(bus):
     input("Press any key!")
 
 
-def test_set_vel(bus,vel):
-    bus.enable([1])
+def test_set_vel(bus,id_list):
+    bus.enable(id_list)
+    vel_dict = {}
     while True:
-        speed = input("input speed!")
-        if speed != '' and speed != 's':
-            bus.set_vel([1],{1:float(speed)})
-            bus.read_status([1])
-            # input("press enter!")
-        elif speed == "s":
-            bus.read_status([1])
-
+        for idnum in id_list:
+            while True:
+                try:
+                    speed = raw_input("idnum is %i, input target speed!\n" % idnum)
+                except:
+                    speed = input("idnum is %i, input target speed!\n" %idnum)
+                if speed != '' and speed != 's':
+                    vel_dict[idnum] = float(speed)
+                    break
+                    #bus.set_vel(id_list,{2:float(speed)})
+                    #bus.read_status([2])
+                    # input("press enter!")
+                elif speed == "s":
+                    bus.read_status(id_list)
+        bus.set_vel(id_list,vel_dict)
+        bus.read_status(id_list)
 
 if __name__ == "__main__":
-    channel = 'COM27'
+    channel = '/dev/ttyUSB0'
     baudrate = 115200
-    id_list = [1]
+    id_list = [1,2]
     bus = amps_motor_control(channel, baudrate)
     input("open port,press enter!")
     bus.open_bus()
@@ -245,6 +262,6 @@ if __name__ == "__main__":
     test_enable_disable(bus)
     input("test set_vel")
     # test_get_vel(bus)
-    test_set_vel(bus,1)
+    test_set_vel(bus,[1,2])
     # ------------------------------------------
     bus.close_bus()
