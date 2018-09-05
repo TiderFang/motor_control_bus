@@ -16,6 +16,8 @@
         5.设置目标运动值（速度、力矩等）
 区别：
     本程序与ZL_motor_control的区别在于：本程序使用的是usb转rs485总线。
+
+    取消對python3的支持，僅僅支持python2
 """
 
 from __future__ import print_function
@@ -25,7 +27,7 @@ import time
 import copy
 import logging
 import serial
-import asyncio
+import can
 
 class amps_motor_control(object):
 
@@ -79,15 +81,23 @@ class amps_motor_control(object):
         checksum = struct.pack(">B", checksum)
         msg = msg + checksum
         return msg
+    
+    def strtobytes(self,msg):
+        byte_list = []
+        for member in msg:
+            byte_list.append(ord(member))
+        return bytes(byte_list)
 
     def send(self, msg):
         try:
+            #self.bus.write(bytes[0x00,0x00])
             self.bus.write(msg)
             return True
         except:
             print("send failure!")
             return False
-
+        
+    # only support for python2
     def recv(self, timeout = 0.1):
         # time.sleep(0.1)
         start = time.time()
@@ -96,26 +106,16 @@ class amps_motor_control(object):
             temp = self.bus.read(10 - len(msg))
             msg = msg + temp
             if (time.time() - start) > timeout:
-                print("read failed!")
+                # print("read failed!")
                 return None
             checksum = 0
             if len(msg) == 10:
-                # in python2 : msg is type of str
-                # in python3 : msg is type of bytes
                 for i in range(len(msg) - 1):
-                    try:
-                        # for python2
-                        checksum = checksum + ord(msg[i])
-                    except:
-                        # for python3
-                        checksum = checksum + msg[i]
-                #print(checksum & 0xff)
-                try:
-                    msg_checksum = ord(msg[9])
-                except:
-                    msg_checksum = msg[9]
+                    # for python2
+                    checksum = checksum + ord(msg[i])
+                msg_checksum = ord(msg[9])
                 if (checksum & 0xff) == msg_checksum:
-                    #print("read a message!")
+                    #print("read a message!it's id is ",ord(msg[0]))
                     return msg
                 else:
                     msg = msg[1:10]
@@ -141,12 +141,12 @@ class amps_motor_control(object):
         data = 0x0F
         recv_msg = {}
         result = True
-        for id in id_list:
-            msg = self.ship_frame(id, cmd, addr, error, data)
+        for member in id_list:
+            msg = self.ship_frame(member, cmd, addr, error, data)
             self.only_send_not_confirm(msg)
-            recv_msg[id] = self.recv()
-            if recv_msg[id][0] == id and recv_msg[id][2] == addr[0] and recv_msg[id][3] == addr[1]:
-                result = result and (recv_msg[id] == 0x62)
+            recv_msg[member] = self.recv()
+            if recv_msg[member][0] == member and ord(recv_msg[member][2]) == addr[0] and ord(recv_msg[member][3]) == addr[1]:
+                result = result and (ord(recv_msg[member][1]) == 0x62)
         return result
 
     def disable(self, id_list):
@@ -156,34 +156,58 @@ class amps_motor_control(object):
         data = 0x06
         recv_msg = {}
         result = True
-        for id in id_list:
-            msg = self.ship_frame(id, cmd, addr, error, data)
+        for member in id_list:
+            msg = self.ship_frame(member, cmd, addr, error, data)
             self.only_send_not_confirm(msg)
-            recv_msg[id] = self.recv()
-            if recv_msg[id][0] == id and recv_msg[id][2] == addr[0] and recv_msg[id][3] == addr[1]:
-                result = result and (recv_msg[id] == 0x62)
+            recv_msg[member] = self.recv()
+            if recv_msg[member][0] == member and ord(recv_msg[member][2]) == addr[0] and ord(recv_msg[member][3]) == addr[1]:
+                result = result and (ord(recv_msg[member][1]) == 0x62)
         return result
 
+	# in use
+    def only_send_status(self,id_list):
+        cmd = 0xA0
+        addr = [0x70, 0x75]
+        error = 0x00
+        data = 0x00
+        for idnum in id_list:
+            #print("send status : ",idnum)
+            msg = self.ship_frame(idnum, cmd, addr, error, data)
+            self.only_send_not_confirm(msg)
+            time.sleep(0.002)
+
+    # in use
+    def only_read_status(self, timeout=0.3):
+        cmd = 0xA0
+        addr = [0x70, 0x75]
+        error = 0x00
+        recv_msg = self.recv() 
+        if recv_msg != None and ord(recv_msg[2]) == addr[0] and ord(recv_msg[3]) == addr[1]:
+            data = recv_msg[7:9]
+            self.status[ord(recv_msg[0])] = struct.unpack('>h', data)[0]
+        else:
+            return False
+        
+    # not in use
     def read_status(self, id_list, timeout=0.3):
         cmd = 0xA0
         addr = [0x70, 0x75]
         error = 0x00
         data = 0x00
         recv_msg = {}
-        vel_dict = {}
+        id_flag = copy.deepcopy(id_list)
         for idnum in id_list:
             msg = self.ship_frame(idnum, cmd, addr, error, data)
             self.only_send_not_confirm(msg)
             recv_msg[idnum] = self.recv()
-        if None not in recv_msg.values():
-            #print(recv_msg)
-            for member in recv_msg.keys():
-                data = recv_msg[member][7:9]
-                self.status[member] = struct.unpack('>h',data)[0]
-            return self.status
-        else:
-            print("update faild!")
-            return False
+        while len(id_flag) != 0:
+            recv_msg = self.recv()
+            if recv_msg != None and  ord(recv_msg[2]) == addr[0] and ord(recv_msg[3]) == addr[1]:
+                data = recv_msg[7:9]
+                self.status[ord(recv_msg[0])] = struct.unpack('>h', data)[0]
+                id_flag.remove(ord(recv_msg[0]))
+            
+                
 
     def set_mode(self, id_list, mode_dict):
         # 3 带加减速控制的速度模式
@@ -200,9 +224,10 @@ class amps_motor_control(object):
             msg = self.ship_frame(member, cmd, addr, error, mode_dict[member])
             self.only_send_not_confirm(msg)
             recv_msg = self.recv()
+            #print("set_mode recv_msg ",recv_msg)
             if msg is not None:
-                result = (result and (recv_msg[0] == msg[0] and recv_msg[1] == 0x62 and
-                                      recv_msg[2] == addr[0] and recv_msg[3] == addr[1]))
+                result = (result and (ord(recv_msg[0]) == msg[0] and ord(recv_msg[1]) == 0x62 and
+                                      ord(recv_msg[2]) == addr[0] and ord(recv_msg[3]) == addr[1]))
         return result
 
     def set_vel(self, id_list, vel_dict):  # rad/s
@@ -214,8 +239,7 @@ class amps_motor_control(object):
             #print("begin to read for set_vel")
             msg = self.ship_frame(member, cmd, addr, error, data)
             self.send(msg)
-            recv_msg = self.recv()
-            #print("set_vel:",recv_msg)
+            time.sleep(0.002)
 
 
 
@@ -250,6 +274,7 @@ def test_set_vel(bus,id_list):
                     bus.read_status(id_list)
         bus.set_vel(id_list,vel_dict)
         bus.read_status(id_list)
+
 
 if __name__ == "__main__":
     channel = '/dev/ttyUSB0'

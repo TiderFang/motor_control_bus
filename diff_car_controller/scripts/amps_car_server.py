@@ -31,7 +31,8 @@ except:
     
 mutex = threading.Lock()
 
-def odom_puber(odom_info,puber):
+def odom_puber(diffcar, puber):
+    odom_info = diffcar.odom
     msg = Odometry()
     msg.header.frame_id = 'odom_link'
     msg.child_frame_id = 'base_link'
@@ -52,33 +53,18 @@ def odom_puber(odom_info,puber):
         msg.twist.twist.angular.z = odom_info['w']
         puber.publish(msg)
         br.sendTransform((odom_info['x'],odom_info['y'],0),odom_qua,rospy.Time.now(),"base_link","odom_link")
+        diffcar.bus.only_send_status(diffcar.id_list)
         rate.sleep()
 
 def vel_callback(msg,arg):
     start = time.time()
     diff_car = arg[0]
-    #print(msg)
     # 处理速度，取决于/cmd_vel的发布速度。
     if diff_car.isRunMode:
         v = msg.linear.x
-        #v = 5  #rad/s
         w = msg.angular.z
-        #w = 5
-        #print("v",v,"w",w)
-        # 使用isSending避免主线程在本线程发送数据的时候，调用update函数，破坏本线程调用update函数。
-        # 由于不关心，发送是否成功，因此，在此决定
-        #diff_car.isSending = True
-        #if  v !=0 or w !=0:
-            #print("let's move the car")
-        start = time.time()
-        mutex.acquire()
         diff_car.set_car_vel(v,w)
-        diff_car.update_status()
-        mutex.release()
-        diff_car.isSending = False
-        print(time.time()-start)
-    #timepass = start - time.time()
-    #print("time pass is:",timepass)
+
         
  
 
@@ -101,7 +87,6 @@ def mode_server(args):
     rospy.loginfo("mode server opened!")
     rospy.spin()
 
-if __name__ == '__main__':
 
     # 初始化节点
     # 建立 bus 以及 car 的 parameter server 参数
@@ -119,8 +104,11 @@ if __name__ == '__main__':
             # 无消息，执行 read status函数
     # config_mode
         # 不做任何动作
-
     # 初始化节点
+
+if __name__ == '__main__':
+
+
     rospy.init_node("car_server",anonymous=True)
 
     # 设置parameter server
@@ -165,7 +153,7 @@ if __name__ == '__main__':
     rospy.Subscriber('/cmd_vel',Twist,vel_callback,(diff_car,))
     
     try:
-        odom_thread = _thread.start_new(odom_puber, (diff_car.odom, odom_publisher))
+        odom_thread = _thread.start_new(odom_puber, (diff_car, odom_publisher))
     except :
         rospy.loginfo("thread creation failed! program exit!")
         exit(0)
@@ -176,27 +164,12 @@ if __name__ == '__main__':
     # 建立一个service，用于外部程序控制本程序的runmode 或者 config mode 
     _thread.start_new(mode_server,(diff_car,))
 
-    i = 0
     # 判断 car 处于 run_mode 还是 config_mode
     while not rospy.is_shutdown():
         if diff_car.isRunMode:
-            #if i == 0 :
-                #rospy.loginfo("car is in run mode!")
-            #避免过于频繁的读取（当buffer没有可读取内容时，会出现问题。）
-            #rospy.Rate(10)
-            # 判断是否有消息需要处理
-            #rospy.spinOnce()
-            if not diff_car.isSending:
-                mutex.acquire()
-            #i = 1
-                diff_car.update_status()  
-            #print(diff_car.bus.status)
-            #print("update times:",i)
-            #i = i + 1
-                mutex.release()
-        else:
-            # do notiong just update status
-            #if i == 1:
-                #rospy.loginfo("car is in configure mode!")
+            rospy.Rate(20)
             diff_car.update_status()
-            #i = 0
+
+        else:
+            diff_car.update_status()
+

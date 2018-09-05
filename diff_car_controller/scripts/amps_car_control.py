@@ -11,6 +11,8 @@ from amps_motor_control import amps_motor_control
 # class ZL_motor_control
 from math import *
 import time
+import can
+
 # 外部设置bus，然后传递给car
 class car(object):
     def __init__(self,wheel_diameter,wheel_distance,bus,id_list):
@@ -21,6 +23,8 @@ class car(object):
         self.odom = {'x':0,'y':0,'theta':0,'v':0,'w':0}
         self.isRunMode = False
         self.isSending = False
+        for member in id_list:
+            self.bus.status[member] = 0
 
     def enable(self):
         return self.bus.enable(self.id_list)
@@ -85,9 +89,10 @@ class car(object):
     def update_status(self):
         recv_msg = None
         try:
-            self.bus.read_status(self.id_list)
-        except can.CanError as e:
-            print(e)
+            #self.bus.read_status(self.id_list)
+            self.bus.only_read_status()
+            #print(self.bus.status)
+        except:
             return False
         finally:
             #print("update car status")
