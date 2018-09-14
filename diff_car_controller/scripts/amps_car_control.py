@@ -39,9 +39,10 @@ class car(object):
 
 
     # 计算轮子速度
+    # 1左 2右
     def cal_wheel_vel(self,v,w):
         w1 = 2*v/self.diameter - w*self.distance/self.diameter
-        w2 = -(2*v/self.diameter + w*self.distance/self.diameter)
+        w2 = -2*v/self.diameter + w*self.distance/self.diameter
         return {self.id_list[0]:w1,self.id_list[1]:w2}
     
     # 获取车的速度和转速
