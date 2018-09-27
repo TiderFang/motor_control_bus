@@ -34,12 +34,10 @@ mutex = threading.Lock()
 def odom_puber(diffcar, puber):
     odom_info = diffcar.odom
     msg = Odometry()
-    if not rospy.has_param("odom_parent_frame"):
-       rospy.set_param("odom_parent_frame","odom_link")
-    if not rospy.has_param("odom_child_frame"):
-       rospy.set_param("odom_child_frame","base_link")
     msg.header.frame_id = rospy.get_param("odom_parent_frame")
-    msg.header.frame_id = rospy.get_param("odom_child_frame")
+    msg.child_frame_id = rospy.get_param("odom_child_frame")
+    odom_parent_frame = msg.header.frame_id
+    odom_child_frame = msg.child_frame_id
     # msg.header.frame_id = 'odom_link'
     # msg.child_frame_id = 'base_link'
     br = tf.TransformBroadcaster()
@@ -58,7 +56,7 @@ def odom_puber(diffcar, puber):
         msg.twist.twist.linear.x = odom_info['v']
         msg.twist.twist.angular.z = odom_info['w']
         puber.publish(msg)
-        br.sendTransform((odom_info['x'],odom_info['y'],0),odom_qua,rospy.Time.now(),"base_link","odom_link")
+        br.sendTransform((odom_info['x'],odom_info['y'],0),odom_qua,rospy.Time.now(),odom_child_frame,odom_parent_frame)
         diffcar.bus.only_send_status(diffcar.id_list)
         rate.sleep()
 
@@ -134,7 +132,11 @@ if __name__ == '__main__':
         rospy.set_param("~wheel_diameter",0.100)
     if not rospy.has_param("~wheel_distance"):
         rospy.set_param("~wheel_distance",0.100)
-
+    if not rospy.has_param("odom_parent_frame"):
+       rospy.set_param("odom_parent_frame","odom_link")
+    if not rospy.has_param("odom_child_frame"):
+       rospy.set_param("odom_child_frame","base_link")
+    
     # 获取设置的参数
     bus_channel = rospy.get_param("~bus_channel")
     bus_baudrate = rospy.get_param("~bus_baudrate")
