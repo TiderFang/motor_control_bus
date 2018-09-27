@@ -50,8 +50,8 @@ class car(object):
         #print(self.bus.status)
         w1 = self.bus.status[self.id_list[0]]
         w2 = self.bus.status[self.id_list[1]]
-        w = (w1+w2)*self.diameter/2/self.diameter
-        v = (w1-w2)*self.diameter/2
+        w = (w1+w2)*self.diameter/2/self.distance/10
+        v = (-w1+w2)*self.diameter/2/2/10
         return [v,w]
     
     #设置车辆odom信息
