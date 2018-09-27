@@ -34,8 +34,14 @@ mutex = threading.Lock()
 def odom_puber(diffcar, puber):
     odom_info = diffcar.odom
     msg = Odometry()
-    msg.header.frame_id = 'odom_link'
-    msg.child_frame_id = 'base_link'
+    if not rospy.has_param("odom_parent_frame"):
+       rospy.set_param("odom_parent_frame","odom_link")
+    if not rospy.has_param("odom_child_frame"):
+       rospy.set_param("odom_child_frame","base_link")
+    msg.header.frame_id = rospy.get_param("odom_parent_frame")
+    msg.header.frame_id = rospy.get_param("odom_child_frame")
+    # msg.header.frame_id = 'odom_link'
+    # msg.child_frame_id = 'base_link'
     br = tf.TransformBroadcaster()
     rate = rospy.Rate(20)
     while not rospy.is_shutdown():
