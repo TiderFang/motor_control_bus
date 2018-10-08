@@ -180,4 +180,6 @@ if __name__ == '__main__':
 
         else:
             diff_car.update_status()
-
+    print("node shutdown, set wheel speed to 0!")
+    diff_car.set_car_vel(0,0)
+    
